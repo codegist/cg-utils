@@ -45,7 +45,36 @@
         }
     };
 
+
+    var isNode = function(o){
+        return (
+            typeof Node === "object" ? o instanceof Node :
+            o && typeof o === "object" && typeof o.nodeType === "number" && typeof o.nodeName==="string"
+        );
+    };
+    var isElement = function(o){
+        return (
+            typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
+            o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName==="string"
+        );
+    };
+    var jsonDomStripper = function(k,v){
+        if(isNode(v) || isElement(v)) {
+            return v.toString();
+        }
+        return v;
+    };
+
     var CGUtils = {
+        json:{
+            stringify:function(object, stripDomProperties, maxLength){
+                var json = JSON.stringify(object, stripDomProperties === true ? jsonDomStripper : undefined);
+                if(maxLength > 0) {
+                    json = String(json).substr(0, maxLength);
+                }
+                return json;
+            }
+        },
         observe:function(config){
             return new CGPropertyObserver(config.observed, config.watchedProperties, config.changeCallback, config.delay, config.observedTemplate);
         },
@@ -117,7 +146,8 @@
             hours > 0 && (durationDisplay += (durationDisplay ? ", " : "") + (hours + " hour" + (hours > 1 ? "s":"")));
             minutes > 0 && (durationDisplay += (durationDisplay ? ", " : "") + (minutes + " minute" + (minutes > 1 ? "s":"")));
             return template.replace("{}", durationDisplay);
-        }
+        },
+
     };
     scope.CGUtils = CGUtils;
 })(window);
