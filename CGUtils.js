@@ -66,6 +66,9 @@
     };
 
     var CGUtils = {
+        clone:function(deep, target, objectA, objectB){
+            return $.extend.apply(this, arguments);
+        },
         json:{
             stringify:function(object, stripDomProperties, maxLength){
                 var json = JSON.stringify(object, stripDomProperties === true ? jsonDomStripper : undefined);
