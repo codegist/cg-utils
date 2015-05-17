@@ -78,6 +78,30 @@
                 return json;
             }
         },
+        utils:{
+            dateRangeIntersects: function(e1, e2){
+                var a1 = e1.from.getTime();
+                var a2 = e1.to.getTime();
+                var b1 = e2.from.getTime();
+                var b2 = e2.to.getTime();
+                return this.intersects(a1,a2,b1,b2);
+            },
+            intersects:function(a1,a2,b1,b2){
+                return (a1 <= b2 && b1 <= a2 );
+            }
+        },
+        comparators:{
+            dateRange:function(a,b){
+                var aFrom = a.from.getTime();
+                var bFrom = b.from.getTime();
+                var aTo = a.to.getTime();
+                var bTo = b.to.getTime();
+                return  aFrom < bFrom ? -1 : aFrom > bFrom ? 1 : aTo < bTo ? 1 : aTo > bTo ? -1 : 0;
+            },
+            number:function(a,b){
+                return a < b ? -1 : a > b ? 1 : 0;
+            }
+        },
         observe:function(config){
             return new CGPropertyObserver(config.observed, config.watchedProperties, config.changeCallback, config.delay, config.observedTemplate);
         },
