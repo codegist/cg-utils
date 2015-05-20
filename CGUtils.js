@@ -102,6 +102,10 @@
                 return a < b ? -1 : a > b ? 1 : 0;
             }
         },
+        displayCountFound:function(type, plural, total){
+            total = total || 0;
+            return total + " " + (total > 1 ? plural : type) + " found.";
+        },
         observe:function(config){
             return new CGPropertyObserver(config.observed, config.watchedProperties, config.changeCallback, config.delay, config.observedTemplate);
         },
