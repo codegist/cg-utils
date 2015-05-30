@@ -110,6 +110,7 @@
             return new CGPropertyObserver(config.observed, config.watchedProperties, config.changeCallback, config.delay, config.observedTemplate);
         },
         formatNumber:function(value, format){
+            if(!value) return "n/a";
             return numeral(value).format(format);
         },
         formatDuration:function(duration){
