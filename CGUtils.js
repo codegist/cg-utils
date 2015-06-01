@@ -1,5 +1,5 @@
 (function(scope){
-    var PolymerUtils = Polymer.api.instance.utils;
+    var Async = Polymer.Async;
 
     var CGPropertyObserver = function(observed, watchedProperties, changeCallback, delay, observedTemplate){
         var observers = [];
@@ -30,7 +30,7 @@
             });
         },
         cancelPendingChangeNotification:function(){
-            PolymerUtils.cancelAsync(this.pendingChangeNotification);
+            Async.cancelAsync(this.pendingChangeNotification);
             this.pendingChangeNotification = null;
         },
         firePendingChangeNotification:function(){
@@ -41,7 +41,7 @@
         scheduleChangeNotification:function(){
             this.observed._dirty = true;
             this.cancelPendingChangeNotification();
-            this.pendingChangeNotification = PolymerUtils.async(this.firePendingChangeNotification.bind(this), null, this.delay);
+            this.pendingChangeNotification = Async.async(this.firePendingChangeNotification.bind(this), null, this.delay);
         }
     };
 
@@ -65,7 +65,7 @@
         return v;
     };
 
-    var CGUtils = {
+    var Utils = {
         clone:function(deep, target, objectA, objectB){
             return $.extend.apply(this, arguments);
         },
@@ -181,5 +181,5 @@
         },
 
     };
-    scope.CGUtils = CGUtils;
+    scope.CG.Utils = Utils;
 })(window);
