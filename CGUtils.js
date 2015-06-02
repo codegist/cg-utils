@@ -87,7 +87,7 @@
                 return this.intersects(a1,a2,b1,b2);
             },
             intersects:function(a1,a2,b1,b2){
-                return (a1 <= b2 && b1 <= a2 );
+                return (a1 < b2 && b1 < a2 );
             }
         },
         comparators:{

@@ -1,0 +1,381 @@
+<link href="../polymer/polymer.html" rel="import">
+<script>
+    Polymer({
+        is: "cg-repeat",
+        "extends": "template",
+        properties: {
+            items: {
+                type: Array
+            },
+            as: {
+                type: String,
+                value: "item"
+            },
+            indexAs: {
+                type: String,
+                value: "index"
+            },
+            sort: {
+                type: Function,
+                observer: "_sortChanged"
+            },
+            filter: {
+                type: Function,
+                observer: "_filterChanged"
+            },
+            params: {
+                type: Object
+            },
+            observe: {
+                type: String,
+                observer: "_observeChanged"
+            },
+            delay: Number
+        },
+        behaviors: [Polymer.Templatizer],
+        observers: ["_itemsChanged(items.*)"],
+        detached: function () {
+            if (this.rows) {
+                for (var i = 0; i < this.rows.length; i++) {
+                    this._detachRow(i);
+                }
+            }
+            this.rows = null;
+        },
+        ready: function () {
+            this._instanceProps = {
+                __key__: true
+            };
+            this._instanceProps[this.as] = true;
+            this._instanceProps[this.indexAs] = true;
+            if (!this.ctor) {
+                this.templatize(this);
+            }
+        },
+        _sortChanged: function () {
+            var dataHost = this._getRootDataHost();
+            var sort = this.sort;
+            this._sortFn = sort && (typeof sort == "function" ? sort : function () {
+                        return dataHost[sort].apply(dataHost, arguments);
+                    });
+            this._fullRefresh = true;
+            if (this.items) {
+                this._debounceTemplate(this._render);
+            }
+        },
+        _filterChanged: function () {
+            var dataHost = this._getRootDataHost();
+            var filter = this.filter;
+            this._filterFn = filter && (typeof filter == "function" ? filter : function () {
+                        return dataHost[filter].apply(dataHost, arguments);
+                    });
+            this._fullRefresh = true;
+            if (this.items) {
+                this._debounceTemplate(this._render);
+            }
+        },
+        _observeChanged: function () {
+            this._observePaths = this.observe && this.observe.replace(".*", ".").split(" ");
+        },
+        _itemsChanged: function (change) {
+            if (change.path == "items") {
+                if (Array.isArray(this.items)) {
+                    this.collection = Polymer.Collection.get(this.items);
+                } else if (!this.items) {
+                    this.collection = null;
+                } else {
+                    this._error(this._logf("dom-repeat", "expected array for `items`," + " found", this.items));
+                }
+                this._splices = [];
+                this._fullRefresh = true;
+                this._debounceTemplate(this._render);
+            } else if (change.path == "items.splices") {
+                this._splices = this._splices.concat(change.value.keySplices);
+                this._debounceTemplate(this._render);
+            } else {
+                var subpath = change.path.slice(6);
+                this._forwardItemPath(subpath, change.value);
+                this._checkObservedPaths(subpath);
+            }
+        },
+        _checkObservedPaths: function (path) {
+            if (this._observePaths) {
+                path = path.substring(path.indexOf(".") + 1);
+                var paths = this._observePaths;
+                for (var i = 0; i < paths.length; i++) {
+                    if (path.indexOf(paths[i]) === 0) {
+                        this._fullRefresh = true;
+                        if (this.delay) {
+                            this.debounce("render", this._render, this.delay);
+                        } else {
+                            this._debounceTemplate(this._render);
+                        }
+                        return;
+                    }
+                }
+            }
+        },
+        render: function () {
+            this._fullRefresh = true;
+            this.debounce("render", this._render);
+            this._flushTemplates();
+        },
+        _render: function () {
+            var c = this.collection;
+            if (!this._fullRefresh) {
+                if (this._sortFn) {
+                    this._applySplicesViewSort(this._splices);
+                } else {
+                    if (this._filterFn) {
+                        this._fullRefresh = true;
+                    } else {
+                        this._applySplicesArraySort(this._splices);
+                    }
+                }
+            }
+            if (this._fullRefresh) {
+                this._sortAndFilter();
+                this._fullRefresh = false;
+            }
+            this._splices = [];
+            var rowForKey = this._rowForKey = {};
+            var keys = this._orderedKeys;
+            this.rows = this.rows || [];
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                var item = c.getItem(key);
+                var row = this.rows[i];
+                rowForKey[key] = i;
+                if (!row) {
+                    this.rows.push(row = this._insertRow(i, null, item));
+                }
+                row[this.as] = item;
+                row.__key__ = key;
+                row[this.indexAs] = i;
+            }
+            for (; i < this.rows.length; i++) {
+                this._detachRow(i);
+            }
+            this.rows.splice(keys.length, this.rows.length - keys.length);
+            this.fire("dom-change");
+        },
+        _sortAndFilter: function () {
+            var c = this.collection;
+            if (!this._sortFn) {
+                this._orderedKeys = [];
+                var items = this.items;
+                if (items) {
+                    for (var i = 0; i < items.length; i++) {
+                        this._orderedKeys.push(c.getKey(items[i]));
+                    }
+                }
+            } else {
+                this._orderedKeys = c ? c.getKeys() : [];
+            }
+            if (this._filterFn) {
+                this._orderedKeys = this._orderedKeys.filter(function (a) {
+                    return this._filterFn(c.getItem(a), this.params);
+                }, this);
+            }
+            if (this._sortFn) {
+                this._orderedKeys.sort(function (a, b) {
+                    return this._sortFn(c.getItem(a), c.getItem(b));
+                }.bind(this));
+            }
+        },
+        _keySort: function (a, b) {
+            return this.collection.getKey(a) - this.collection.getKey(b);
+        },
+        _applySplicesViewSort: function (splices) {
+            var c = this.collection;
+            var keys = this._orderedKeys;
+            var rows = this.rows;
+            var removedRows = [];
+            var addedKeys = [];
+            var pool = [];
+            var sortFn = this._sortFn || this._keySort.bind(this);
+            splices.forEach(function (s) {
+                for (var i = 0; i < s.removed.length; i++) {
+                    var idx = this._rowForKey[s.removed[i]];
+                    if (idx != null) {
+                        removedRows.push(idx);
+                    }
+                }
+                for (var i = 0; i < s.added.length; i++) {
+                    addedKeys.push(s.added[i]);
+                }
+            }, this);
+            if (removedRows.length) {
+                removedRows.sort();
+                for (var i = removedRows.length - 1; i >= 0; i--) {
+                    var idx = removedRows[i];
+                    pool.push(this._detachRow(idx));
+                    rows.splice(idx, 1);
+                    keys.splice(idx, 1);
+                }
+            }
+            if (addedKeys.length) {
+                if (this._filterFn) {
+                    addedKeys = addedKeys.filter(function (a) {
+                        return this._filterFn(c.getItem(a), this.params);
+                    }, this);
+                }
+                addedKeys.sort(function (a, b) {
+                    return this._sortFn(c.getItem(a), c.getItem(b));
+                }.bind(this));
+                var start = 0;
+                for (var i = 0; i < addedKeys.length; i++) {
+                    start = this._insertRowIntoViewSort(start, addedKeys[i], pool);
+                }
+            }
+        },
+        _insertRowIntoViewSort: function (start, key, pool) {
+            var c = this.collection;
+            var item = c.getItem(key);
+            var end = this.rows.length - 1;
+            var idx = -1;
+            var sortFn = this._sortFn || this._keySort.bind(this);
+            while (start <= end) {
+                var mid = start + end >> 1;
+                var midKey = this._orderedKeys[mid];
+                var cmp = sortFn(c.getItem(midKey), item);
+                if (cmp < 0) {
+                    start = mid + 1;
+                } else if (cmp > 0) {
+                    end = mid - 1;
+                } else {
+                    idx = mid;
+                    break;
+                }
+            }
+            if (idx < 0) {
+                idx = end + 1;
+            }
+            this._orderedKeys.splice(idx, 0, key);
+            this.rows.splice(idx, 0, this._insertRow(idx, pool, c.getItem(key)));
+            return idx;
+        },
+        _applySplicesArraySort: function (splices) {
+            var keys = this._orderedKeys;
+            var pool = [];
+            splices.forEach(function (s) {
+                for (var i = 0; i < s.removed.length; i++) {
+                    pool.push(this._detachRow(s.index + i));
+                }
+                this.rows.splice(s.index, s.removed.length);
+            }, this);
+            var c = this.collection;
+            splices.forEach(function (s) {
+                var args = [s.index, s.removed.length].concat(s.added);
+                keys.splice.apply(keys, args);
+                for (var i = 0; i < s.added.length; i++) {
+                    var item = c.getItem(s.added[i]);
+                    var row = this._insertRow(s.index + i, pool, item);
+                    this.rows.splice(s.index + i, 0, row);
+                }
+            }, this);
+        },
+        _detachRow: function (idx) {
+            var row = this.rows[idx];
+            var parentNode = Polymer.dom(this).parentNode;
+            for (var i = 0; i < row._children.length; i++) {
+                var el = row._children[i];
+                Polymer.dom(row.root).appendChild(el);
+            }
+            return row;
+        },
+        _insertRow: function (idx, pool, item) {
+            var row = pool && pool.pop() || this._generateRow(idx, item);
+            var beforeRow = this.rows[idx];
+            var beforeNode = beforeRow ? beforeRow._children[0] : this;
+            var parentNode = Polymer.dom(this).parentNode;
+            Polymer.dom(parentNode).insertBefore(row.root, beforeNode);
+            return row;
+        },
+        _generateRow: function (idx, item) {
+            var model = {
+                __key__: this.collection.getKey(item)
+            };
+            model[this.as] = item;
+            model[this.indexAs] = idx;
+            var row = this.stamp(model);
+            return row;
+        },
+        _hideChildren: function (hidden) {
+            if (this.rows) {
+                for (var i = 0; i < this.rows.length; i++) {
+                    var c$ = this.rows[i]._children;
+                    for (var j = 0; j < c$.length; j++) {
+                        var c = c$[j];
+                        if (c.style) {
+                            c.style.display = hidden ? "none" : "";
+                        }
+                        c._hideTemplateChildren = hidden;
+                    }
+                }
+            }
+        },
+        _forwardInstancePath: function (row, path, value) {
+            if (path.indexOf(this.as + ".") === 0) {
+                this.notifyPath("items." + row.__key__ + "." + path.slice(this.as.length + 1), value);
+                return true;
+            }
+        },
+        _forwardParentProp: function (prop, value) {
+            if (this.rows) {
+                this.rows.forEach(function (row) {
+                    row[prop] = value;
+                }, this);
+            }
+        },
+        _forwardParentPath: function (path, value) {
+            if (this.rows) {
+                this.rows.forEach(function (row) {
+                    row.notifyPath(path, value, true);
+                }, this);
+            }
+        },
+        _forwardItemPath: function (path, value) {
+            if (this._rowForKey) {
+                var dot = path.indexOf(".");
+                var key = path.substring(0, dot < 0 ? path.length : dot);
+                var idx = this._rowForKey[key];
+                var row = this.rows[idx];
+                if (row) {
+                    if (dot >= 0) {
+                        path = this.as + "." + path.substring(dot + 1);
+                        row.notifyPath(path, value, true);
+                    } else {
+                        row[this.as] = value;
+                    }
+                }
+            }
+        },
+        modelForElement: function (el) {
+            var model;
+            while (el) {
+                if (model = el._templateInstance) {
+                    if (model.dataHost != this) {
+                        el = model.dataHost;
+                    } else {
+                        return model;
+                    }
+                } else {
+                    el = el.parentNode;
+                }
+            }
+        },
+        itemForElement: function (el) {
+            var instance = this.modelForElement(el);
+            return instance && instance[this.as];
+        },
+        keyForElement: function (el) {
+            var instance = this.modelForElement(el);
+            return instance && instance.__key__;
+        },
+        indexForElement: function (el) {
+            var instance = this.modelForElement(el);
+            return instance && instance[this.indexAs];
+        }
+    });
+</script>
