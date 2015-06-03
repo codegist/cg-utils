@@ -22,7 +22,7 @@
     };
     CGPropertyObserver.prototype = {
         destroy:function(firePendingChangeNotification){
-            var hadTask = this.task != null;
+            var hadTask = this.pendingChangeNotification != null;
             hadTask && firePendingChangeNotification === true && this.firePendingChangeNotification();
             this.cancelPendingChangeNotification();
             this.observers.forEach(function(obs){
@@ -41,7 +41,7 @@
         scheduleChangeNotification:function(){
             this.observed._dirty = true;
             this.cancelPendingChangeNotification();
-            this.pendingChangeNotification = Async.run(this.firePendingChangeNotification.bind(this), null, this.delay);
+            this.pendingChangeNotification = Async.run(this.firePendingChangeNotification.bind(this), this.delay);
         }
     };
 
