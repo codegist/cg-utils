@@ -30,7 +30,7 @@
             });
         },
         cancelPendingChangeNotification:function(){
-            Async.cancelAsync(this.pendingChangeNotification);
+            Async.cancel(this.pendingChangeNotification);
             this.pendingChangeNotification = null;
         },
         firePendingChangeNotification:function(){
@@ -41,7 +41,7 @@
         scheduleChangeNotification:function(){
             this.observed._dirty = true;
             this.cancelPendingChangeNotification();
-            this.pendingChangeNotification = Async.async(this.firePendingChangeNotification.bind(this), null, this.delay);
+            this.pendingChangeNotification = Async.run(this.firePendingChangeNotification.bind(this), null, this.delay);
         }
     };
 
