@@ -1,0 +1,62 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../cg-utils/cg-utils.html">
+
+<script>
+    var UtilitiesBehaviorImpl = {
+        utils:CG.Utils,
+        hasLength:function(length){
+            return length > 0;
+        },
+        and:function(conditions){
+            console.log(arguments)
+            for(var i = 0; i < arguments.length; i++){
+                if(!arguments[i]){
+                    return false;
+                }
+            }
+            return true;
+        },
+        ifTrue:function(condition, trueValue, falseValue){
+            return condition ? trueValue : falseValue;
+        },
+        ifEqualsTo:function(a, b, trueValue, falseValue){
+            return a == b ? trueValue : falseValue;
+        },
+        ifNotEqualsTo:function(a, b, trueValue, falseValue){
+            return a != b ? trueValue : falseValue;
+        },
+        ifGreaterThan:function(a, b, trueValue, falseValue){
+            return a > b ? trueValue : falseValue;
+        },
+        ifLessThan:function(a, b, trueValue, falseValue){
+            return a < b ? trueValue : falseValue;
+        },
+        isDefined:function(a){
+            return a != undefined && a != null;
+        },
+        concat:function(str1, str2){
+            return Array.prototype.slice.call(arguments).join('');
+        },
+        listenOnce: function(event, fn, args) {
+            var self = this;
+            var listener = function() {
+                fn.apply(self, Array.prototype.slice.call(arguments).concat(args));
+                this.removeEventListener(event, listener, false);
+            };
+            this.addEventListener(event, listener, false);
+        },
+        doWhenConditionIsMet:function(callback, condition, waitTime){
+            if(!condition.call(this)) {
+                this.debounce(this.constructor.name + "-waiting-for-condition", this.doWhenConditionIsMet.bind(this, callback, condition, waitTime), waitTime || 20)
+            }else{
+                callback.call(this);
+            }
+        },
+        cancelEvent:function(e){
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    };
+
+    CG.UtilitiesBehavior = [UtilitiesBehaviorImpl];
+</script>
