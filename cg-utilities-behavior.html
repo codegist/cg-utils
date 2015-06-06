@@ -4,8 +4,11 @@
 <script>
     var UtilitiesBehaviorImpl = {
         utils:CG.Utils,
-        hasLength:function(length){
-            return length > 0;
+        genId:function(){
+            return CG.Utils.Randoms.id();
+        },
+        isGreaterThan:function(length, value){
+            return length > value;
         },
         and:function(conditions){
             for(var i = 0; i < arguments.length; i++){
@@ -31,6 +34,17 @@
         map:function(map, key){
             if(!map || !key) return undefined;
             return map[key];
+        },
+        cssToNumber:function(css){
+            return parseInt(css);
+        },
+        style:function(key,val){
+            if(arguments.length % 2 != 0) return;
+            var style = "";
+            for(var i = 0; i < arguments.length; i = i + 2){
+                style += arguments[i] + ":" + arguments[i + 1] + ";";
+            }
+            return style;
         },
         hasProp:function(map, key){
             return map && key && map[key];

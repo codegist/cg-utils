@@ -67,6 +67,10 @@
 
     var Utils = {
         Objects:{
+            deepClone:function(o){
+                var target = Array.isArray(o) ? [] : {};
+                return $.extend(true, target, o);
+            },
             clone:function(deep, target, objectA, objectB){
                 return $.extend.apply(this, arguments);
             },
@@ -183,6 +187,14 @@
             countFound:function(type, plural, total){
                 total = total || 0;
                 return total + " " + (total > 1 ? plural : type) + " found.";
+            }
+        },
+        Randoms:{
+            id:function(){
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+                    return v.toString(16);
+                });
             }
         }
     };
