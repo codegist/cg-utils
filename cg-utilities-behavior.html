@@ -8,13 +8,32 @@
             return length > 0;
         },
         and:function(conditions){
-            console.log(arguments)
             for(var i = 0; i < arguments.length; i++){
                 if(!arguments[i]){
                     return false;
                 }
             }
             return true;
+        },
+        sub:function(a, b){
+            return a - b;
+        },
+        add:function(a, b){
+            var total = 0;
+            for(var i = 0; i < arguments.length; i++){
+                total += Number(arguments[i]);
+            }
+            return total;
+        },
+        equals:function(a,b) {
+            return a == b;
+        },
+        map:function(map, key){
+            if(!map || !key) return undefined;
+            return map[key];
+        },
+        hasProp:function(map, key){
+            return map && key && map[key];
         },
         ifTrue:function(condition, trueValue, falseValue){
             return condition ? trueValue : falseValue;
