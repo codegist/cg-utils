@@ -45,6 +45,9 @@
             }
             return style;
         },
+        getOrDefaults:function(o, path, defaultValue){
+            return this.get(path, o) || defaultValue;
+        },
         firstPropFound:function(o, paths){
             var args = Array.prototype.slice.call(arguments);
             args.splice(1,0,undefined);
@@ -99,6 +102,9 @@
         },
         ifLessThan:function(a, b, trueValue, falseValue){
             return a < b ? trueValue : falseValue;
+        },
+        defaults:function(a, defaultValue){
+            return this.isDefined(a) ? a : defaultValue;
         },
         isDefined:function(a){
             return a != undefined && a != null;
