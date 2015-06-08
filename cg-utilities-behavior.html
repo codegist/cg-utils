@@ -72,36 +72,38 @@
             o = args.shift();
             return this.isDefined(this.get(args, o));
         },
-        ifTrue:function(condition, trueValue, falseValue){
-            return condition ? trueValue : falseValue;
+        ifTrue:function(condition, trueValue, falseValue, commonValue){
+            return (condition ? trueValue : falseValue) + (commonValue || "");
         },
-        ifEqualsTo:function(a, b, trueValue, falseValue){
+        ifEqualsTo:function(a, b, trueValue, falseValue, commonValue){
+            commonValue = commonValue || "";
             var args = Array.prototype.slice.call(arguments);
             trueValue = args[args.length - 2];
             falseValue = args[args.length - 1];
             for(var i = 0; i<args.length - 2; i += 2){
                 if(args[i] != args[i+1]) {
-                    return falseValue;
+                    return falseValue + commonValue;
                 }
             }
-            return trueValue;
+            return trueValue + commonValue;
         },
-        ifNotEqualsTo:function(a, b, trueValue, falseValue){
+        ifNotEqualsTo:function(a, b, trueValue, falseValue, commonValue){
+            commonValue = commonValue || "";
             var args = Array.prototype.slice.call(arguments);
             trueValue = args[args.length - 2];
             falseValue = args[args.length - 1];
             for(var i = 0; i<args.length - 2; i += 2){
                 if(args[i] == args[i+1]) {
-                    return falseValue;
+                    return falseValue + commonValue;
                 }
             }
-            return trueValue;
+            return trueValue + commonValue;
         },
-        ifGreaterThan:function(a, b, trueValue, falseValue){
-            return a > b ? trueValue : falseValue;
+        ifGreaterThan:function(a, b, trueValue, falseValue, commonValue){
+            return (a > b ? trueValue : falseValue) + (commonValue || "");
         },
-        ifLessThan:function(a, b, trueValue, falseValue){
-            return a < b ? trueValue : falseValue;
+        ifLessThan:function(a, b, trueValue, falseValue, commonValue){
+            return (a < b ? trueValue : falseValue) + (commonValue || "");
         },
         defaults:function(a, defaultValue){
             return this.isDefined(a) ? a : defaultValue;
