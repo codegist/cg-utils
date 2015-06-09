@@ -10,10 +10,10 @@
         isGreaterThan:function(length, value){
             return length > value;
         },
-        and:function(conditions){
+        falses:function(conditions){
             var args = Array.prototype.slice.call(arguments);
             for(var i = 0; i < args.length; i++){
-                if(!args[i]){
+                if(args[i]){
                     return false;
                 }
             }
