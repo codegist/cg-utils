@@ -10,6 +10,15 @@
         isGreaterThan:function(length, value){
             return length > value;
         },
+        or:function(conditions){
+            var args = Array.prototype.slice.call(arguments);
+            for(var i = 0; i < args.length; i++){
+                if(args[i]){
+                    return true;
+                }
+            }
+            return false;
+        },
         falses:function(conditions){
             var args = Array.prototype.slice.call(arguments);
             for(var i = 0; i < args.length; i++){
