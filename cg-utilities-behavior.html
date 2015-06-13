@@ -3,6 +3,12 @@
 
 <script>
     var UtilitiesBehaviorImpl = {
+        properties:{
+            self:{
+                type:Object,
+                value:function(){return this;}
+            },
+        },
         utils:CG.Utils,
         genId:function(){
             return CG.Utils.Generators.id();
@@ -85,11 +91,13 @@
             return (condition ? trueValue : falseValue) + (commonValue || "");
         },
         ifEqualsTo:function(a, b, trueValue, falseValue, commonValue){
-            commonValue = commonValue || "";
             var args = Array.prototype.slice.call(arguments);
-            trueValue = args[args.length - 2];
-            falseValue = args[args.length - 1];
-            for(var i = 0; i<args.length - 2; i += 2){
+            var hasCommon = args.length % 2 == 1;
+            commonValue = hasCommon ? (args[args.length - 1] || "") : "";
+            var index = hasCommon ? 1 : 0;
+            trueValue = args[args.length - 2 - index];
+            falseValue = args[args.length - 1 - index];
+            for(var i = 0; i<args.length - 2 - index; i += 2){
                 if(args[i] != args[i+1]) {
                     return falseValue + commonValue;
                 }
@@ -97,11 +105,13 @@
             return trueValue + commonValue;
         },
         ifNotEqualsTo:function(a, b, trueValue, falseValue, commonValue){
-            commonValue = commonValue || "";
             var args = Array.prototype.slice.call(arguments);
-            trueValue = args[args.length - 2];
-            falseValue = args[args.length - 1];
-            for(var i = 0; i<args.length - 2; i += 2){
+            var hasCommon = args.length % 2 == 1;
+            commonValue = hasCommon ? (args[args.length - 1] || "") : "";
+            var index = hasCommon ? 1 : 0;
+            trueValue = args[args.length - 2 - index];
+            falseValue = args[args.length - 1 - index];
+            for(var i = 0; i<args.length - 2 - index; i += 2){
                 if(args[i] == args[i+1]) {
                     return falseValue + commonValue;
                 }
