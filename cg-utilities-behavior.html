@@ -154,7 +154,12 @@
         cancelEvent:function(e){
             e.stopPropagation();
             e.preventDefault();
-        }
+        },
+        asyncFire:function(type, detail, options){
+            this.async(function(){
+                this.fire(type, detail, options);
+            });
+        },
     };
 
     CG.UtilitiesBehavior = [UtilitiesBehaviorImpl];
