@@ -27,6 +27,9 @@
             clone:function(deep, target, objectA, objectB){
                 return $.extend.apply(this, arguments);
             },
+            toArray: function(list) {
+                return Array.prototype.slice.call(list || [], 0);
+            },
         },
         Json:{
             stringify:function(object, stripDomProperties, maxLength){
