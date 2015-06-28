@@ -33,11 +33,15 @@
         },
         Json:{
             stringify:function(object, stripDomProperties, maxLength){
-                var json = JSON.stringify(object, stripDomProperties === true ? jsonDomStripper : undefined);
-                if(maxLength > 0) {
-                    json = String(json).substr(0, maxLength);
+                try {
+                    var json = JSON.stringify(object, stripDomProperties === true ? jsonDomStripper : undefined);
+                    if (maxLength > 0) {
+                        json = String(json).substr(0, maxLength);
+                    }
+                    return json;
+                }catch(e){
+                    return String(object);
                 }
-                return json;
             }
         },
         Ranges:{
