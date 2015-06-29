@@ -1,23 +1,21 @@
 <link rel="import" href="../polymer/polymer.html">
 <script>
     Polymer({
-        is: "cg-repeat",
-        "extends": "template",
+        is: 'cg-repeat',
+        extends: 'template',
         properties: {
-            items: {
-                type: Array
-            },
+            items: { type: Array },
             as: {
                 type: String,
-                value: "item"
+                value: 'item'
             },
             indexAs: {
                 type: String,
-                value: "index"
+                value: 'index'
             },
             sort: {
                 type: Function,
-                observer: "_sortChanged"
+                observer: '_sortChanged'
             },
             filter: {
                 type: Function,
@@ -28,24 +26,29 @@
             },
             observe: {
                 type: String,
-                observer: "_observeChanged"
+                observer: '_observeChanged'
             },
             delay: Number
         },
         behaviors: [Polymer.Templatizer],
-        observers: ["_itemsChanged(items.*)"],
+        observers: ['_itemsChanged(items.*)'],
         detached: function () {
             if (this.rows) {
                 for (var i = 0; i < this.rows.length; i++) {
                     this._detachRow(i);
                 }
             }
-            this.rows = null;
+        },
+        attached: function () {
+            if (this.rows) {
+                var parentNode = Polymer.dom(this).parentNode;
+                for (var i = 0; i < this.rows.length; i++) {
+                    Polymer.dom(parentNode).insertBefore(this.rows[i].root, this);
+                }
+            }
         },
         ready: function () {
-            this._instanceProps = {
-                __key__: true
-            };
+            this._instanceProps = { __key__: true };
             this._instanceProps[this.as] = true;
             this._instanceProps[this.indexAs] = true;
             if (!this.ctor) {
@@ -55,7 +58,7 @@
         _sortChanged: function () {
             var dataHost = this._getRootDataHost();
             var sort = this.sort;
-            this._sortFn = sort && (typeof sort == "function" ? sort : function () {
+            this._sortFn = sort && (typeof sort == 'function' ? sort : function () {
                         return dataHost[sort].apply(dataHost, arguments);
                     });
             this._fullRefresh = true;
@@ -66,7 +69,7 @@
         _filterChanged: function () {
             var dataHost = this._getRootDataHost();
             var filter = this.filter;
-            this._filterFn = filter && (typeof filter == "function" ? filter : function () {
+            this._filterFn = filter && (typeof filter == 'function' ? filter : function () {
                         return dataHost[filter].apply(dataHost, arguments);
                     });
             this._fullRefresh = true;
@@ -75,21 +78,21 @@
             }
         },
         _observeChanged: function () {
-            this._observePaths = this.observe && this.observe.replace(".*", ".").split(" ");
+            this._observePaths = this.observe && this.observe.replace('.*', '.').split(' ');
         },
         _itemsChanged: function (change) {
-            if (change.path == "items") {
+            if (change.path == 'items') {
                 if (Array.isArray(this.items)) {
                     this.collection = Polymer.Collection.get(this.items);
                 } else if (!this.items) {
                     this.collection = null;
                 } else {
-                    this._error(this._logf("dom-repeat", "expected array for `items`," + " found", this.items));
+                    this._error(this._logf('dom-repeat', 'expected array for `items`,' + ' found', this.items));
                 }
                 this._splices = [];
                 this._fullRefresh = true;
                 this._debounceTemplate(this._render);
-            } else if (change.path == "items.splices") {
+            } else if (change.path == 'items.splices') {
                 this._splices = this._splices.concat(change.value.keySplices);
                 this._debounceTemplate(this._render);
             } else {
@@ -100,13 +103,13 @@
         },
         _checkObservedPaths: function (path) {
             if (this._observePaths) {
-                path = path.substring(path.indexOf(".") + 1);
+                path = path.substring(path.indexOf('.') + 1);
                 var paths = this._observePaths;
                 for (var i = 0; i < paths.length; i++) {
                     if (path.indexOf(paths[i]) === 0) {
                         this._fullRefresh = true;
                         if (this.delay) {
-                            this.debounce("render", this._render, this.delay);
+                            this.debounce('render', this._render, this.delay);
                         } else {
                             this._debounceTemplate(this._render);
                         }
@@ -117,7 +120,7 @@
         },
         render: function () {
             this._fullRefresh = true;
-            this.debounce("render", this._render);
+            this._debounceTemplate(this._render);
             this._flushTemplates();
         },
         _render: function () {
@@ -149,15 +152,15 @@
                 if (!row) {
                     this.rows.push(row = this._insertRow(i, null, item));
                 }
-                row[this.as] = item;
-                row.__key__ = key;
-                row[this.indexAs] = i;
+                row.__setProperty(this.as, item, true);
+                row.__setProperty('__key__', key, true);
+                row.__setProperty(this.indexAs, i, true);
             }
             for (; i < this.rows.length; i++) {
                 this._detachRow(i);
             }
             this.rows.splice(keys.length, this.rows.length - keys.length);
-            this.fire("dom-change");
+            this.fire('dom-change');
         },
         _sortAndFilter: function () {
             var c = this.collection;
@@ -266,7 +269,10 @@
             }, this);
             var c = this.collection;
             splices.forEach(function (s) {
-                var args = [s.index, s.removed.length].concat(s.added);
+                var args = [
+                    s.index,
+                    s.removed.length
+                ].concat(s.added);
                 keys.splice.apply(keys, args);
                 for (var i = 0; i < s.added.length; i++) {
                     var item = c.getItem(s.added[i]);
@@ -293,38 +299,46 @@
             return row;
         },
         _generateRow: function (idx, item) {
-            var model = {
-                __key__: this.collection.getKey(item)
-            };
+            var model = { __key__: this.collection.getKey(item) };
             model[this.as] = item;
             model[this.indexAs] = idx;
             var row = this.stamp(model);
             return row;
         },
-        _hideChildren: function (hidden) {
+        _showHideChildren: function (hidden) {
             if (this.rows) {
                 for (var i = 0; i < this.rows.length; i++) {
                     var c$ = this.rows[i]._children;
                     for (var j = 0; j < c$.length; j++) {
                         var c = c$[j];
                         if (c.style) {
-                            c.style.display = hidden ? "none" : "";
+                            c.style.display = hidden ? 'none' : '';
                         }
                         c._hideTemplateChildren = hidden;
                     }
                 }
             }
         },
+        _forwardInstanceProp: function (row, prop, value) {
+            if (prop == this.as) {
+                var idx;
+                if (this._sortFn || this._filterFn) {
+                    idx = this.items.indexOf(this.collection.getItem(row.__key__));
+                } else {
+                    idx = row[this.indexAs];
+                }
+                this.set('items.' + idx, value);
+            }
+        },
         _forwardInstancePath: function (row, path, value) {
-            if (path.indexOf(this.as + ".") === 0) {
-                this.notifyPath("items." + row.__key__ + "." + path.slice(this.as.length + 1), value);
-                return true;
+            if (path.indexOf(this.as + '.') === 0) {
+                this.notifyPath('items.' + row.__key__ + '.' + path.slice(this.as.length + 1), value);
             }
         },
         _forwardParentProp: function (prop, value) {
             if (this.rows) {
                 this.rows.forEach(function (row) {
-                    row[prop] = value;
+                    row.__setProperty(prop, value, true);
                 }, this);
             }
         },
@@ -337,16 +351,16 @@
         },
         _forwardItemPath: function (path, value) {
             if (this._rowForKey) {
-                var dot = path.indexOf(".");
+                var dot = path.indexOf('.');
                 var key = path.substring(0, dot < 0 ? path.length : dot);
                 var idx = this._rowForKey[key];
                 var row = this.rows[idx];
                 if (row) {
                     if (dot >= 0) {
-                        path = this.as + "." + path.substring(dot + 1);
+                        path = this.as + '.' + path.substring(dot + 1);
                         row.notifyPath(path, value, true);
                     } else {
-                        row[this.as] = value;
+                        row.__setProperty(this.as, value, true);
                     }
                 }
             }
